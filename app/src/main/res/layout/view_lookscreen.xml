@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:id="@+id/lockscreen_background_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+
+
+        <RelativeLayout
+            android:id="@+id/lockscreen_background_status_dummy"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_alignParentTop="true"
+            android:background="@android:color/transparent">
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/lockscreen_background_in_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/lockscreen_background_status_dummy"
+            android:background="@android:color/transparent">
+
+            <ImageView
+                android:id="@+id/lockscreen_background_image"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/lock" />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <com.github.dubu.lockscreenusingservice.LockScreenView
+        android:id="@+id/lockscreen_forground_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:id="@+id/lockscreen_forground_status_dummy"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_alignParentTop="true"
+            android:background="@android:color/holo_orange_light">
+
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/imgClick"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:background="@drawable/images" />
+
+
+        <RelativeLayout
+            android:id="@+id/layoutRoot"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#54C3B8">
+            <!--Logo-->
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="100dp"
+                android:src="@drawable/ic_logo_okippa" />
+
+            <EditText
+                android:textColorHint="#999999"
+                android:id="@+id/edPass"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="32dp"
+                android:layout_marginRight="32dp"
+                android:background="@drawable/corner_border_edtext"
+                android:hint="Enter your tracking number"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:paddingLeft="8dp"
+                android:textColor="@android:color/black" />
+
+            <LinearLayout
+                android:id="@+id/layoutProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/edPass"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/validate_tracking"
+                    android:textColor="#E0D7E5" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/layoutProgress"
+                android:paddingLeft="32dp"
+                android:paddingRight="32dp"
+                android:paddingTop="8dp"
+                android:textColor="#D0021B"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <com.romainpiel.shimmer.ShimmerTextView
+            android:id="@+id/shimmer_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:textColor="#444"
+            android:textSize="30sp" />
+
+    </com.github.dubu.lockscreenusingservice.LockScreenView>
+
+</RelativeLayout>
+
