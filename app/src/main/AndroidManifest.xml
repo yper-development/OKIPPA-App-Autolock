@@ -33,12 +33,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.github.dubu.lockscreenusingservice.LockscreenActivity" />
-        <activity android:name="com.github.dubu.lockscreenusingservice.PermissionActivity" />
-        <service android:name="com.github.dubu.lockscreenusingservice.service.LockscreenService">
+        <activity android:name="com.hungvv.lib.lockscreenusingservice.LockscreenActivity" />
+        <activity android:name="com.hungvv.lib.lockscreenusingservice.PermissionActivity" />
+        <service android:name="com.hungvv.lib.lockscreenusingservice.service.LockscreenService">
 
         </service>
-        <service android:name="com.github.dubu.lockscreenusingservice.service.LockscreenViewService">
+        <service android:name="com.hungvv.lib.lockscreenusingservice.service.LockscreenViewService">
 
         </service>
     </application>

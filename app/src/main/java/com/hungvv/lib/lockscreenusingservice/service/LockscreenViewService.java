@@ -1,15 +1,18 @@
-package com.github.dubu.lockscreenusingservice.service;
+package com.hungvv.lib.lockscreenusingservice.service;
 
 import android.annotation.TargetApi;
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,17 +20,28 @@ import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
-import com.github.dubu.lockscreenusingservice.Lockscreen;
-import com.github.dubu.lockscreenusingservice.LockscreenUtil;
-import com.github.dubu.lockscreenusingservice.PermissionActivity;
-import com.github.dubu.lockscreenusingservice.R;
-import com.github.dubu.lockscreenusingservice.SharedPreferencesUtil;
+import com.hungvv.lib.lockscreenusingservice.Lockscreen;
+import com.hungvv.lib.lockscreenusingservice.LockscreenUtil;
+import com.hungvv.lib.lockscreenusingservice.PermissionActivity;
+
+import com.hungvv.lib.lockscreenusingservice.SharedPreferencesUtil;
+import com.nr_yper.lockscreen.R;
+import com.nr_yper.lockscreen.data.api.LockApiService;
+import com.nr_yper.lockscreen.data.model.Mansion;
+import com.nr_yper.lockscreen.data.service.LockAppUtils;
 import com.romainpiel.shimmer.Shimmer;
 import com.romainpiel.shimmer.ShimmerTextView;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 
@@ -40,7 +54,7 @@ public class LockscreenViewService extends Service {
     private WindowManager.LayoutParams mParams;
     private RelativeLayout mBackgroundLayout = null;
     private RelativeLayout mBackgroundInLayout = null;
-    private ImageView mBackgroundLockImageView = null;
+    //    private ImageView mBackgroundLockImageView = null;
     private RelativeLayout mForgroundLayout = null;
     private RelativeLayout mStatusBackgruondDummyView = null;
     private RelativeLayout mStatusForgruondDummyView = null;
@@ -52,13 +66,23 @@ public class LockscreenViewService extends Service {
     private float mLastLayoutX = 0;
     private int mServiceStartId = 0;
     private SendMassgeHandler mMainHandler = null;
-//    private boolean sIsSoftKeyEnable = false;
+    private TextView tvTextClick;
+    //    private boolean sIsSoftKeyEnable = false;
+    private ImageView imgClick;
+    private RelativeLayout layoutRoot;
+    private EditText edPassword;
+    private LockApiService lockApiService;
+    private ProgressDialog progressDialog = null;
+    private String device_id = "1";
+    private LinearLayout layoutValidate;
+    private TextView tvErrorMess;
+    private String ninjalockLink = "market://details?id=com.linough.android.ninjalock";
 
     private class SendMassgeHandler extends android.os.Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            changeBackGroundLockView(mLastLayoutX);
+//            changeBackGroundLockView(mLastLayoutX);
         }
     }
 
@@ -94,7 +118,7 @@ public class LockscreenViewService extends Service {
             initView();
             attachLockScreenView();
         }
-        return LockscreenViewService.START_NOT_STICKY;
+        return LockscreenViewService.START_STICKY;
     }
 
     @Override
@@ -104,7 +128,8 @@ public class LockscreenViewService extends Service {
 
 
     private void initState() {
-
+        device_id = LockscreenUtil.getInstance(mContext).getDeviceId(mContext);
+        lockApiService = LockAppUtils.getLockApiService();
         mIsLockEnable = LockscreenUtil.getInstance(mContext).isStandardKeyguardState();
         if (mIsLockEnable) {
             mParams = new WindowManager.LayoutParams(
@@ -144,7 +169,7 @@ public class LockscreenViewService extends Service {
         }
 
         if (null == mLockscreenView) {
-            mLockscreenView = mInflater.inflate(R.layout.view_locokscreen, null);
+            mLockscreenView = mInflater.inflate(R.layout.view_lookscreen, null);
 
         }
     }
@@ -161,7 +186,7 @@ public class LockscreenViewService extends Service {
 
 
     private void attachLockScreenView() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(mContext)) {
                 Intent permissionActivityIntent = new Intent(mContext, PermissionActivity.class);
                 permissionActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -184,6 +209,25 @@ public class LockscreenViewService extends Service {
             addLockScreenView();
         }
 
+    }
+
+    public void showErrorMess(String errorText) {
+        tvErrorMess.setVisibility(View.VISIBLE);
+        tvErrorMess.setText(errorText);
+    }
+
+    public void hideErrorMess() {
+        tvErrorMess.setVisibility(View.GONE);
+    }
+
+    public void showProgress() {
+        edPassword.setClickable(false);
+        layoutValidate.setVisibility(View.VISIBLE);
+    }
+
+    public void hideProgress() {
+        layoutValidate.setVisibility(View.GONE);
+        edPassword.setClickable(true);
     }
 
     private void addLockScreenView() {
@@ -212,29 +256,111 @@ public class LockscreenViewService extends Service {
         }
     }
 
+    private void openUrl(String url) {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        i.setData(Uri.parse(url));
+        startActivity(i);
+    }
+
     @TargetApi(Build.VERSION_CODES.M)
     private boolean isAttachedToWindow() {
         return mLockscreenView.isAttachedToWindow();
     }
 
     private void settingLockView() {
+        layoutValidate = (LinearLayout) mLockscreenView.findViewById(R.id.layoutProgress);
+        tvErrorMess = (TextView) mLockscreenView.findViewById(R.id.tvErrorText);
+        edPassword = (EditText) mLockscreenView.findViewById(R.id.edPass);
+        layoutRoot = (RelativeLayout) mLockscreenView.findViewById(R.id.layoutRoot);
+        imgClick = (ImageView) mLockscreenView.findViewById(R.id.imgClick);
         mBackgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_layout);
         mBackgroundInLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_in_layout);
-        mBackgroundLockImageView = (ImageView) mLockscreenView.findViewById(R.id.lockscreen_background_image);
+//        mBackgroundLockImageView = (ImageView) mLockscreenView.findViewById(R.id.lockscreen_background_image);
         mForgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_forground_layout);
         mShimmerTextView = (ShimmerTextView) mLockscreenView.findViewById(R.id.shimmer_tv);
         (new Shimmer()).start(mShimmerTextView);
-//        mForgroundLayout.setOnTouchListener(mViewTouchListener);
+        mForgroundLayout.setOnTouchListener(mViewTouchListener);
 
         mStatusBackgruondDummyView = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_status_dummy);
         mStatusForgruondDummyView = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_forground_status_dummy);
-        setBackGroundLockView();
+//        setBackGroundLockView();
 
         DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
         mDeviceWidth = displayMetrics.widthPixels;
         mDevideDeviceWidth = (mDeviceWidth / 2);
-        mBackgroundLockImageView.setX((int) (((mDevideDeviceWidth) * -1)));
+//        mBackgroundLockImageView.setX((int) (((mDevideDeviceWidth) * -1)));
+        imgClick.setOnClickListener(mOnclick);
+        layoutRoot.setOnClickListener(mOnclick);
+        //TODO change when in product
+        edPassword.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    //Call api
+                    String inputString = edPassword.getText().toString();
+                    if (!inputString.equals("")) {
+                        showProgress();
+                        hideErrorMess();
+                        if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
+                            //device_id for product, 1 for testing
+                            lockApiService.validateLockscreen(edPassword.getText().toString(), "1").enqueue(new Callback<Mansion>() {
+                                @Override
+                                public void onResponse(Call<Mansion> call, Response<Mansion> response) {
+                                    hideProgress();
 
+                                    if (response.isSuccessful()) {
+                                        //Check is_correct
+                                        Mansion responseMansion = response.body();
+                                        boolean isCorrect = !(responseMansion != null && responseMansion.getIs_correct());
+                                        if (isCorrect) {
+                                            try {
+                                                Intent i = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
+                                                mContext.startActivity(i);
+                                            } catch (Exception e) {
+                                                // TODO Auto-generated catch block
+                                                //If current device don't have ninja lock
+                                                openUrl(ninjalockLink);
+
+                                            }
+                                            mForgroundLayout.setX(mDevideDeviceWidth);
+                                            mForgroundLayout.setY(0);
+                                            dettachLockScreenView();
+                                        } else {
+
+                                            showErrorMess("You have entered the wrong tracking number, Please try again!");
+                                        }
+
+
+                                    } else {
+                                        //Failed, re-enter the track_number
+                                        showErrorMess("Somethings went wrong, please try again! ");
+
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<Mansion> call, Throwable t) {
+                                    hideProgress();
+                                    showErrorMess("Somethings went wrong, please try again! ");
+                                }
+                            });
+
+                        } else {
+                            hideProgress();
+                            showErrorMess("Please check your internet connection!");
+
+                        }
+                        return false;
+
+                    } else {
+                        return true;
+                    }
+
+                }
+                return false;
+            }
+        });
         //kitkat
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             int val = LockscreenUtil.getInstance(mContext).getStatusBarHeight();
@@ -251,34 +377,41 @@ public class LockscreenViewService extends Service {
         }
     }
 
-    private void setBackGroundLockView() {
-        if (mIsLockEnable) {
-            mBackgroundInLayout.setBackgroundColor(getResources().getColor(R.color.lock_background_color));
-            mBackgroundLockImageView.setVisibility(View.VISIBLE);
+//    private void setBackGroundLockView() {
+//        if (mIsLockEnable) {
+//            mBackgroundInLayout.setBackgroundColor(getResources().getColor(R.color.lock_background_color));
+//            mBackgroundLockImageView.setVisibility(View.VISIBLE);
+//
+//        } else {
+//            mBackgroundInLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+//            mBackgroundLockImageView.setVisibility(View.GONE);
+//        }
+//    }
 
-        } else {
-            mBackgroundInLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-            mBackgroundLockImageView.setVisibility(View.GONE);
+
+//    private void changeBackGroundLockView(float forgroundX) {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//            if (forgroundX < mDeviceWidth) {
+//                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.lock));
+//            } else {
+//                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.unlock));
+//            }
+//        } else {
+//            if (forgroundX < mDeviceWidth) {
+//                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.lock));
+//            } else {
+//                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.unlock));
+//            }
+//        }
+//    }
+
+    private View.OnClickListener mOnclick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+//            Toast.makeText(mContext, "OnClickID" + view.getId(), Toast.LENGTH_SHORT).show();
+
         }
-    }
-
-
-    private void changeBackGroundLockView(float forgroundX) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (forgroundX < mDeviceWidth) {
-                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.lock));
-            } else {
-                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.unlock));
-            }
-        } else {
-            if (forgroundX < mDeviceWidth) {
-                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.lock));
-            } else {
-                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.unlock));
-            }
-        }
-    }
-
+    };
 
     private View.OnTouchListener mViewTouchListener = new View.OnTouchListener() {
         private float firstTouchX = 0;
@@ -296,7 +429,7 @@ public class LockscreenViewService extends Service {
                 case MotionEvent.ACTION_DOWN: {// 0
                     firstTouchX = event.getX();
                     layoutPrevX = mForgroundLayout.getX();
-                    layoutInPrevX = mBackgroundLockImageView.getX();
+//                    layoutInPrevX = mBackgroundLockImageView.getX();
                     if (firstTouchX <= LOCK_OPEN_OFFSET_VALUE) {
                         isLockOpen = true;
                     }
@@ -307,7 +440,7 @@ public class LockscreenViewService extends Service {
                         touchMoveX = (int) (event.getRawX() - firstTouchX);
                         if (mForgroundLayout.getX() >= 0) {
                             mForgroundLayout.setX((int) (layoutPrevX + touchMoveX));
-                            mBackgroundLockImageView.setX((int) (layoutInPrevX + (touchMoveX / 1.8)));
+//                            mBackgroundLockImageView.setX((int) (layoutInPrevX + (touchMoveX / 1.8)));
                             mLastLayoutX = lastLayoutX;
                             mMainHandler.sendEmptyMessage(0);
                             if (mForgroundLayout.getX() < 0) {

@@ -1,15 +1,11 @@
-package com.github.dubu.lockscreenusingservice;
+package com.hungvv.lib.lockscreenusingservice;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.ViewTreeObserver;
 

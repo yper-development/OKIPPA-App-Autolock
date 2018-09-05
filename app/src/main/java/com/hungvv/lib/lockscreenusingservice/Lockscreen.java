@@ -1,10 +1,10 @@
-package com.github.dubu.lockscreenusingservice;
+package com.hungvv.lib.lockscreenusingservice;
 
 import android.content.Context;
 import android.content.Intent;
 
-import com.github.dubu.lockscreenusingservice.service.LockscreenService;
-import com.github.dubu.lockscreenusingservice.service.LockscreenViewService;
+import com.hungvv.lib.lockscreenusingservice.service.LockscreenService;
+import com.hungvv.lib.lockscreenusingservice.service.LockscreenViewService;
 
 public class Lockscreen {
     private Context mContext = null;

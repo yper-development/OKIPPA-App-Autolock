@@ -1,4 +1,4 @@
-package com.github.dubu.lockscreenusingservice.service;
+package com.hungvv.lib.lockscreenusingservice.service;
 
 import android.app.KeyguardManager;
 import android.app.Service;
@@ -10,8 +10,8 @@ import android.os.IBinder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.github.dubu.lockscreenusingservice.LockscreenActivity;
-import com.github.dubu.lockscreenusingservice.LockscreenUtil;
+import com.hungvv.lib.lockscreenusingservice.LockscreenActivity;
+import com.hungvv.lib.lockscreenusingservice.LockscreenUtil;
 
 public class LockscreenService extends Service {
     private final String TAG = "LockscreenService";

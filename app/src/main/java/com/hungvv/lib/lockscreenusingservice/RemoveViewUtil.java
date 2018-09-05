@@ -1,4 +1,4 @@
-package com.github.dubu.lockscreenusingservice;
+package com.hungvv.lib.lockscreenusingservice;
 
 import android.view.View;
 import android.view.ViewGroup;

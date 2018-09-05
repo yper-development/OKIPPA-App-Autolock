@@ -1,4 +1,4 @@
-package com.github.dubu.lockscreenusingservice;
+package com.hungvv.lib.lockscreenusingservice;
 
 import android.app.Activity;
 import android.content.Context;
@@ -12,7 +12,8 @@ import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
-import com.github.dubu.lockscreenusingservice.service.LockscreenViewService;
+import com.hungvv.lib.lockscreenusingservice.service.LockscreenViewService;
+import com.nr_yper.lockscreen.R;
 
 public class LockscreenActivity extends Activity {
     private final String TAG = "LockscreenActivity";

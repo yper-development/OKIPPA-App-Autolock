@@ -1,25 +1,14 @@
 package com.nr_yper.lockscreen;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SwitchCompat;
 import android.widget.CompoundButton;
-import android.widget.Toast;
 
-import com.github.dubu.lockscreenusingservice.Lockscreen;
-import com.github.dubu.lockscreenusingservice.LockscreenUtil;
-import com.github.dubu.lockscreenusingservice.SharedPreferencesUtil;
+import com.hungvv.lib.lockscreenusingservice.Lockscreen;
+import com.hungvv.lib.lockscreenusingservice.SharedPreferencesUtil;
 import com.nr_yper.lockscreen.data.api.LockApiService;
-import com.nr_yper.lockscreen.data.model.Mansion;
-import com.nr_yper.lockscreen.data.service.LockAppUtils;
-import com.nr_yper.lockscreen.data.service.RetrofitClient;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
     private Context mContext = null;
