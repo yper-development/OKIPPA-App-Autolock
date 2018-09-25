@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Settings;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -33,11 +35,16 @@ import com.hungvv.lib.lockscreenusingservice.PermissionActivity;
 
 import com.hungvv.lib.lockscreenusingservice.SharedPreferencesUtil;
 import com.nr_yper.lockscreen.R;
+import com.nr_yper.lockscreen.adapter.TranspoterAdapter;
 import com.nr_yper.lockscreen.data.api.LockApiService;
 import com.nr_yper.lockscreen.data.model.Mansion;
+import com.nr_yper.lockscreen.data.model.Transporter;
 import com.nr_yper.lockscreen.data.service.LockAppUtils;
 import com.romainpiel.shimmer.Shimmer;
 import com.romainpiel.shimmer.ShimmerTextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -77,6 +84,8 @@ public class LockscreenViewService extends Service {
     private LinearLayout layoutValidate;
     private TextView tvErrorMess;
     private String ninjalockLink = "market://details?id=com.linough.android.ninjalock";
+    private RecyclerView recyclerTransporter;
+    private List<Transporter> transporters = new ArrayList<>();
 
     private class SendMassgeHandler extends android.os.Handler {
         @Override
@@ -117,6 +126,7 @@ public class LockscreenViewService extends Service {
             initState();
             initView();
             attachLockScreenView();
+
         }
         return LockscreenViewService.START_STICKY;
     }
@@ -126,6 +136,33 @@ public class LockscreenViewService extends Service {
         dettachLockScreenView();
     }
 
+    private void loadListTransport() {
+        LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
+
+        recyclerTransporter.setLayoutManager(layoutManager);
+
+        lockApiService.getTransporter().enqueue(new Callback<List<Transporter>>() {
+            @Override
+            public void onResponse(Call<List<Transporter>> call, Response<List<Transporter>> response) {
+                if (response.isSuccessful()) {
+                    LockscreenViewService.this.transporters = response.body();
+                    final TranspoterAdapter transpoterAdapter = new TranspoterAdapter(transporters, mContext);
+                    transpoterAdapter.notifyDataSetChanged();
+                    recyclerTransporter.setAdapter(transpoterAdapter);
+                }
+
+
+            }
+
+            @Override
+            public void onFailure(Call<List<Transporter>> call, Throwable t) {
+                showErrorMess("Error Fetching data");
+            }
+        });
+
+
+
+    }
 
     private void initState() {
         device_id = LockscreenUtil.getInstance(mContext).getDeviceId(mContext);
@@ -209,6 +246,7 @@ public class LockscreenViewService extends Service {
             addLockScreenView();
         }
 
+
     }
 
     public void showErrorMess(String errorText) {
@@ -269,6 +307,7 @@ public class LockscreenViewService extends Service {
     }
 
     private void settingLockView() {
+        recyclerTransporter = (RecyclerView) mLockscreenView.findViewById(R.id.listTransporter);
         layoutValidate = (LinearLayout) mLockscreenView.findViewById(R.id.layoutProgress);
         tvErrorMess = (TextView) mLockscreenView.findViewById(R.id.tvErrorText);
         edPassword = (EditText) mLockscreenView.findViewById(R.id.edPass);
@@ -293,6 +332,7 @@ public class LockscreenViewService extends Service {
         imgClick.setOnClickListener(mOnclick);
         layoutRoot.setOnClickListener(mOnclick);
         //TODO change when in product
+        loadListTransport();
         edPassword.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
@@ -304,7 +344,7 @@ public class LockscreenViewService extends Service {
                         hideErrorMess();
                         if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
                             //device_id for product, 1 for testing
-                            lockApiService.validateLockscreen(edPassword.getText().toString(), "1").enqueue(new Callback<Mansion>() {
+                            lockApiService.validateLockscreen(edPassword.getText().toString(), device_id).enqueue(new Callback<Mansion>() {
                                 @Override
                                 public void onResponse(Call<Mansion> call, Response<Mansion> response) {
                                     hideProgress();
@@ -312,7 +352,7 @@ public class LockscreenViewService extends Service {
                                     if (response.isSuccessful()) {
                                         //Check is_correct
                                         Mansion responseMansion = response.body();
-                                        boolean isCorrect = !(responseMansion != null && responseMansion.getIs_correct());
+                                        boolean isCorrect = (responseMansion != null && responseMansion.getIs_correct());
                                         if (isCorrect) {
                                             try {
                                                 Intent i = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
@@ -328,7 +368,7 @@ public class LockscreenViewService extends Service {
                                             dettachLockScreenView();
                                         } else {
 
-                                            showErrorMess("You have entered the wrong tracking number, Please try again!");
+                                            showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                                         }
 
 

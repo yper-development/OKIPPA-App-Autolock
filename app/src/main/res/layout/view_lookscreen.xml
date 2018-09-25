@@ -66,18 +66,19 @@
             android:background="#54C3B8">
             <!--Logo-->
             <ImageView
+                android:id="@+id/logo"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="100dp"
+                android:layout_marginTop="50dp"
                 android:src="@drawable/ic_logo_okippa" />
 
             <EditText
-                android:textColorHint="#999999"
+                android:layout_below="@+id/logo"
                 android:id="@+id/edPass"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:layout_centerInParent="true"
+                android:layout_marginTop="32dp"
                 android:layout_marginLeft="32dp"
                 android:layout_marginRight="32dp"
                 android:background="@drawable/corner_border_edtext"
@@ -85,7 +86,8 @@
                 android:imeOptions="actionDone"
                 android:inputType="text"
                 android:paddingLeft="8dp"
-                android:textColor="@android:color/black" />
+                android:textColor="@android:color/black"
+                android:textColorHint="#999999" />
 
             <LinearLayout
                 android:id="@+id/layoutProgress"
@@ -119,6 +121,17 @@
                 android:paddingTop="8dp"
                 android:textColor="#D0021B"
                 android:visibility="gone" />
+
+            <android.support.v7.widget.RecyclerView
+                android:layout_marginLeft="32dp"
+                android:layout_marginRight="32dp"
+                android:id="@+id/listTransporter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/edPass"
+                android:layout_marginTop="16dp">
+
+            </android.support.v7.widget.RecyclerView>
         </RelativeLayout>
 
         <com.romainpiel.shimmer.ShimmerTextView
