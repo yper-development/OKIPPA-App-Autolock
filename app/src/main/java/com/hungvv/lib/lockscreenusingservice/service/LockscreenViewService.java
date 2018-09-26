@@ -23,11 +23,13 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.hungvv.lib.lockscreenusingservice.Lockscreen;
 import com.hungvv.lib.lockscreenusingservice.LockscreenUtil;
@@ -86,7 +88,8 @@ public class LockscreenViewService extends Service {
     private String ninjalockLink = "market://details?id=com.linough.android.ninjalock";
     private RecyclerView recyclerTransporter;
     private List<Transporter> transporters = new ArrayList<>();
-
+    private Button btnsubmit;
+    private  TranspoterAdapter transpoterAdapter;
     private class SendMassgeHandler extends android.os.Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -140,15 +143,17 @@ public class LockscreenViewService extends Service {
         LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
 
         recyclerTransporter.setLayoutManager(layoutManager);
-
+        transpoterAdapter = new TranspoterAdapter(transporters, mContext);
+        transpoterAdapter.setTransporterListener(mTransporterLisenter);
+        recyclerTransporter.setAdapter(transpoterAdapter);
         lockApiService.getTransporter().enqueue(new Callback<List<Transporter>>() {
             @Override
             public void onResponse(Call<List<Transporter>> call, Response<List<Transporter>> response) {
                 if (response.isSuccessful()) {
                     LockscreenViewService.this.transporters = response.body();
-                    final TranspoterAdapter transpoterAdapter = new TranspoterAdapter(transporters, mContext);
-                    transpoterAdapter.notifyDataSetChanged();
-                    recyclerTransporter.setAdapter(transpoterAdapter);
+                    transpoterAdapter.setTransporters(transporters);
+
+
                 }
 
 
@@ -159,7 +164,6 @@ public class LockscreenViewService extends Service {
                 showErrorMess("Error Fetching data");
             }
         });
-
 
 
     }
@@ -221,6 +225,15 @@ public class LockscreenViewService extends Service {
         return isLock;
     }
 
+
+    TranspoterAdapter.TransporterListener mTransporterLisenter = new TranspoterAdapter.TransporterListener() {
+        @Override
+        public void onClickTranspoter(Transporter transporter) {
+                //Do stuff
+            Toast.makeText(mContext, transporter.getName() +"", Toast.LENGTH_SHORT).show();
+
+        }
+    };
 
     private void attachLockScreenView() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -315,7 +328,7 @@ public class LockscreenViewService extends Service {
         imgClick = (ImageView) mLockscreenView.findViewById(R.id.imgClick);
         mBackgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_layout);
         mBackgroundInLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_in_layout);
-//        mBackgroundLockImageView = (ImageView) mLockscreenView.findViewById(R.id.lockscreen_background_image);
+        btnsubmit = (Button) mLockscreenView.findViewById(R.id.btnSubmit);
         mForgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_forground_layout);
         mShimmerTextView = (ShimmerTextView) mLockscreenView.findViewById(R.id.shimmer_tv);
         (new Shimmer()).start(mShimmerTextView);
@@ -323,21 +336,36 @@ public class LockscreenViewService extends Service {
 
         mStatusBackgruondDummyView = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_status_dummy);
         mStatusForgruondDummyView = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_forground_status_dummy);
-//        setBackGroundLockView();
-
         DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
         mDeviceWidth = displayMetrics.widthPixels;
         mDevideDeviceWidth = (mDeviceWidth / 2);
-//        mBackgroundLockImageView.setX((int) (((mDevideDeviceWidth) * -1)));
         imgClick.setOnClickListener(mOnclick);
         layoutRoot.setOnClickListener(mOnclick);
+        btnsubmit.setOnClickListener(mOnclick);
         //TODO change when in product
         loadListTransport();
-        edPassword.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    //Call api
+        //kitkat
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            int val = LockscreenUtil.getInstance(mContext).getStatusBarHeight();
+            RelativeLayout.LayoutParams forgroundParam = (RelativeLayout.LayoutParams) mStatusForgruondDummyView.getLayoutParams();
+            forgroundParam.height = val;
+            mStatusForgruondDummyView.setLayoutParams(forgroundParam);
+            AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
+            alpha.setDuration(0); // Make animation instant
+            alpha.setFillAfter(true); // Tell it to persist after the animation ends
+            mStatusForgruondDummyView.startAnimation(alpha);
+            RelativeLayout.LayoutParams backgroundParam = (RelativeLayout.LayoutParams) mStatusBackgruondDummyView.getLayoutParams();
+            backgroundParam.height = val;
+            mStatusBackgruondDummyView.setLayoutParams(backgroundParam);
+        }
+    }
+
+
+    private View.OnClickListener mOnclick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            switch (view.getId()) {
+                case R.id.btnSubmit:
                     String inputString = edPassword.getText().toString();
                     if (!inputString.equals("")) {
                         showProgress();
@@ -391,64 +419,13 @@ public class LockscreenViewService extends Service {
                             showErrorMess("Please check your internet connection!");
 
                         }
-                        return false;
+
 
                     } else {
-                        return true;
+                        showErrorMess("Please check your internet connection!");
                     }
-
-                }
-                return false;
+                    break;
             }
-        });
-        //kitkat
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            int val = LockscreenUtil.getInstance(mContext).getStatusBarHeight();
-            RelativeLayout.LayoutParams forgroundParam = (RelativeLayout.LayoutParams) mStatusForgruondDummyView.getLayoutParams();
-            forgroundParam.height = val;
-            mStatusForgruondDummyView.setLayoutParams(forgroundParam);
-            AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
-            alpha.setDuration(0); // Make animation instant
-            alpha.setFillAfter(true); // Tell it to persist after the animation ends
-            mStatusForgruondDummyView.startAnimation(alpha);
-            RelativeLayout.LayoutParams backgroundParam = (RelativeLayout.LayoutParams) mStatusBackgruondDummyView.getLayoutParams();
-            backgroundParam.height = val;
-            mStatusBackgruondDummyView.setLayoutParams(backgroundParam);
-        }
-    }
-
-//    private void setBackGroundLockView() {
-//        if (mIsLockEnable) {
-//            mBackgroundInLayout.setBackgroundColor(getResources().getColor(R.color.lock_background_color));
-//            mBackgroundLockImageView.setVisibility(View.VISIBLE);
-//
-//        } else {
-//            mBackgroundInLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-//            mBackgroundLockImageView.setVisibility(View.GONE);
-//        }
-//    }
-
-
-//    private void changeBackGroundLockView(float forgroundX) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//            if (forgroundX < mDeviceWidth) {
-//                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.lock));
-//            } else {
-//                mBackgroundLockImageView.setBackground(getResources().getDrawable(R.drawable.unlock));
-//            }
-//        } else {
-//            if (forgroundX < mDeviceWidth) {
-//                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.lock));
-//            } else {
-//                mBackgroundLockImageView.setBackgroundDrawable(getResources().getDrawable(R.drawable.unlock));
-//            }
-//        }
-//    }
-
-    private View.OnClickListener mOnclick = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-//            Toast.makeText(mContext, "OnClickID" + view.getId(), Toast.LENGTH_SHORT).show();
 
         }
     };

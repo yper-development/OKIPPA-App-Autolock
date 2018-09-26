@@ -14,7 +14,8 @@ public interface LockApiService {
 
     @POST("/api/lock/device_status")
     Call<Mansion> validateLockscreen(@Query("tracking_number") String tracking_number,
-                                     @Query("device_id") String device_id);
+                                     @Query("device_id") String device_id,
+                                     @Query("transport_corp_id") int transport_corp_id);
     @GET("/api/get_lists_transport_corp")
     Call<List<Transporter>> getTransporter();
 

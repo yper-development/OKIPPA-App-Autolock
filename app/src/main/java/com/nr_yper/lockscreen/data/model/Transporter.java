@@ -30,6 +30,16 @@ public class Transporter {
     @Expose
     private Object updatedAt;
 
+    private boolean isCheck;
+
+    public boolean isCheck() {
+        return isCheck;
+    }
+
+    public void setCheck(boolean check) {
+        isCheck = check;
+    }
+
     public Integer getId() {
         return id;
     }
