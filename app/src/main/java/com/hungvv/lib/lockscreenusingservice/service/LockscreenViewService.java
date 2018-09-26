@@ -17,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -301,10 +302,13 @@ public class LockscreenViewService extends Service {
     }
 
     private void showDialog(String mess) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        mForgroundLayout.setX(mDevideDeviceWidth);
+        mForgroundLayout.setY(0);
+        dettachLockScreenView();
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext.getApplicationContext());
         builder.setMessage(mess+"");
         builder.setCancelable(false);
-        builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 //finish navigate to ninja lock
@@ -317,14 +321,24 @@ public class LockscreenViewService extends Service {
                     openUrl(ninjalockLink);
 
                 }
-                mForgroundLayout.setX(mDevideDeviceWidth);
-                mForgroundLayout.setY(0);
-                dettachLockScreenView();
+
             }
         });
         AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         alertDialog.show();
+        TextView messageView = (TextView)alertDialog.findViewById(android.R.id.message);
+        messageView.setGravity(Gravity.CENTER);
 
+        TextView titleView = (TextView)alertDialog.findViewById(mContext.getResources().getIdentifier("alertTitle", "id", "android"));
+        if (titleView != null) {
+            titleView.setGravity(Gravity.CENTER);
+        }
+
+        final Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        LinearLayout.LayoutParams positiveButtonLL = (LinearLayout.LayoutParams) positiveButton.getLayoutParams();
+        positiveButtonLL.gravity = Gravity.CENTER;
+        positiveButton.setLayoutParams(positiveButtonLL);
     }
 
     private boolean dettachLockScreenView() {
@@ -417,7 +431,7 @@ public class LockscreenViewService extends Service {
                                             showDialog(responseMansion.getLock_key()); //showKey
 
                                         } else {
-
+                                            showDialog(responseMansion.getLock_key()); //showKey
                                             showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                                         }
 
