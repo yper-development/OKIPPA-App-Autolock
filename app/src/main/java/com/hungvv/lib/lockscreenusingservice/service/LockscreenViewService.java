@@ -1,9 +1,11 @@
 package com.hungvv.lib.lockscreenusingservice.service;
 
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.net.Uri;
@@ -14,6 +16,7 @@ import android.provider.Settings;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -83,13 +86,15 @@ public class LockscreenViewService extends Service {
     private LockApiService lockApiService;
     private ProgressDialog progressDialog = null;
     private String device_id = "1";
+    private int transId = 0;
     private LinearLayout layoutValidate;
     private TextView tvErrorMess;
     private String ninjalockLink = "market://details?id=com.linough.android.ninjalock";
     private RecyclerView recyclerTransporter;
     private List<Transporter> transporters = new ArrayList<>();
     private Button btnsubmit;
-    private  TranspoterAdapter transpoterAdapter;
+    private TranspoterAdapter transpoterAdapter;
+
     private class SendMassgeHandler extends android.os.Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -170,6 +175,7 @@ public class LockscreenViewService extends Service {
 
     private void initState() {
         device_id = LockscreenUtil.getInstance(mContext).getDeviceId(mContext);
+        Log.d("DEVICE_ID", device_id);
         lockApiService = LockAppUtils.getLockApiService();
         mIsLockEnable = LockscreenUtil.getInstance(mContext).isStandardKeyguardState();
         if (mIsLockEnable) {
@@ -229,8 +235,8 @@ public class LockscreenViewService extends Service {
     TranspoterAdapter.TransporterListener mTransporterLisenter = new TranspoterAdapter.TransporterListener() {
         @Override
         public void onClickTranspoter(Transporter transporter) {
-                //Do stuff
-            Toast.makeText(mContext, transporter.getName() +"", Toast.LENGTH_SHORT).show();
+            //Do stuff
+            transId = transporter.getId();
 
         }
     };
@@ -294,6 +300,32 @@ public class LockscreenViewService extends Service {
         }
     }
 
+    private void showDialog(String mess) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        builder.setMessage(mess+"");
+        builder.setCancelable(false);
+        builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                //finish navigate to ninja lock
+                try {
+                    Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
+                    mContext.startActivity(intent);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    //If current device don't have ninja lock
+                    openUrl(ninjalockLink);
+
+                }
+                mForgroundLayout.setX(mDevideDeviceWidth);
+                mForgroundLayout.setY(0);
+                dettachLockScreenView();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
 
     private boolean dettachLockScreenView() {
         if (null != mWindowManager && null != mLockscreenView && isAttachedToWindow()) {
@@ -372,7 +404,7 @@ public class LockscreenViewService extends Service {
                         hideErrorMess();
                         if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
                             //device_id for product, 1 for testing
-                            lockApiService.validateLockscreen(edPassword.getText().toString(), device_id).enqueue(new Callback<Mansion>() {
+                            lockApiService.validateLockscreen(edPassword.getText().toString(), device_id, transId).enqueue(new Callback<Mansion>() {
                                 @Override
                                 public void onResponse(Call<Mansion> call, Response<Mansion> response) {
                                     hideProgress();
@@ -382,18 +414,8 @@ public class LockscreenViewService extends Service {
                                         Mansion responseMansion = response.body();
                                         boolean isCorrect = (responseMansion != null && responseMansion.getIs_correct());
                                         if (isCorrect) {
-                                            try {
-                                                Intent i = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
-                                                mContext.startActivity(i);
-                                            } catch (Exception e) {
-                                                // TODO Auto-generated catch block
-                                                //If current device don't have ninja lock
-                                                openUrl(ninjalockLink);
+                                            showDialog(responseMansion.getLock_key()); //showKey
 
-                                            }
-                                            mForgroundLayout.setX(mDevideDeviceWidth);
-                                            mForgroundLayout.setY(0);
-                                            dettachLockScreenView();
                                         } else {
 
                                             showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
