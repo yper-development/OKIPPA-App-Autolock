@@ -431,14 +431,13 @@ public class LockscreenViewService extends Service {
                                             showDialog(responseMansion.getLock_key()); //showKey
 
                                         } else {
-                                            showDialog(responseMansion.getLock_key()); //showKey
                                             showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                                         }
 
 
                                     } else {
                                         //Failed, re-enter the track_number
-                                        showErrorMess("Somethings went wrong, please try again! ");
+                                        showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。 ");
 
                                     }
                                 }
@@ -446,19 +445,19 @@ public class LockscreenViewService extends Service {
                                 @Override
                                 public void onFailure(Call<Mansion> call, Throwable t) {
                                     hideProgress();
-                                    showErrorMess("Somethings went wrong, please try again! ");
+                                    showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。 ");
                                 }
                             });
 
                         } else {
                             hideProgress();
-                            showErrorMess("Please check your internet connection!");
+                            showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
 
                         }
 
 
                     } else {
-                        showErrorMess("Please check your internet connection!");
+                        showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                     }
                     break;
             }
