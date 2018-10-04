@@ -1,38 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layoutRootTranspoter"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-
-   >
-
-    <ImageView
-        android:id="@+id/imgTrans"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:padding="5dp"
-        android:src="@drawable/ic_demo" />
+    android:layout_height="150dp"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="6dp">
 
     <TextView
-
-        android:layout_toStartOf="@+id/imgCheck"
-        android:layout_centerVertical="true"
+        android:maxLines="2"
         android:id="@+id/tvTrans"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@+id/imgTrans"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:textColor="@android:color/white"
         android:textSize="21sp"
         android:textStyle="bold" />
 
     <ImageView
-        android:visibility="gone"
-        android:id="@+id/imgCheck"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="12dp"
-        android:padding="6dp"
-        android:src="@drawable/ic_check" />
-</RelativeLayout>
+        android:id="@+id/imgTrans"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+
+        android:src="@drawable/ic_demo" />
+
+
+</LinearLayout>

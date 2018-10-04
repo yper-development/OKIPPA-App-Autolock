@@ -11,17 +11,6 @@ public class Mansion {
     @SerializedName("message")
     @Expose
     private String message;
-    @SerializedName("lock_key")
-    @Expose
-    private String lock_key;
-
-    public String getLock_key() {
-        return lock_key;
-    }
-
-    public void setLock_key(String lock_key) {
-        this.lock_key = lock_key;
-    }
 
     public String getMessage() {
         return message;

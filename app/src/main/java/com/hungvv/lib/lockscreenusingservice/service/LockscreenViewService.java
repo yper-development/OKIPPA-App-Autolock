@@ -1,6 +1,9 @@
 package com.hungvv.lib.lockscreenusingservice.service;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.Service;
@@ -13,8 +16,11 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -25,8 +31,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -82,7 +90,7 @@ public class LockscreenViewService extends Service {
     private TextView tvTextClick;
     //    private boolean sIsSoftKeyEnable = false;
     private ImageView imgClick;
-    private RelativeLayout layoutRoot;
+    private LinearLayout layoutRoot;
     private EditText edPassword;
     private LockApiService lockApiService;
     private ProgressDialog progressDialog = null;
@@ -95,6 +103,11 @@ public class LockscreenViewService extends Service {
     private List<Transporter> transporters = new ArrayList<>();
     private Button btnsubmit;
     private TranspoterAdapter transpoterAdapter;
+    private TextView titleRecyclerView;
+    Button btnEdit;
+    private boolean isShowTransList = true;
+    private int mShortAnimationDuration;
+    private TextView titlePass;
 
     private class SendMassgeHandler extends android.os.Handler {
         @Override
@@ -146,19 +159,24 @@ public class LockscreenViewService extends Service {
     }
 
     private void loadListTransport() {
-        LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
-
+        StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        com.nr_yper.lockscreen.adapter.DividerItemDecoration dividerItemDecoration = new com.nr_yper.lockscreen.adapter.DividerItemDecoration(mContext, R.drawable.divider_item);
+        com.nr_yper.lockscreen.adapter.DividerItemDecoration dividerItemDecoration1 = new com.nr_yper.lockscreen.adapter.DividerItemDecoration(mContext, R.drawable.divider_item);
+        dividerItemDecoration1.setOrientation(com.nr_yper.lockscreen.adapter.DividerItemDecoration.VERTICAL);
         recyclerTransporter.setLayoutManager(layoutManager);
+        recyclerTransporter.addItemDecoration(dividerItemDecoration);
+        recyclerTransporter.addItemDecoration(dividerItemDecoration1);
+        recyclerTransporter.setHasFixedSize(true);
         transpoterAdapter = new TranspoterAdapter(transporters, mContext);
         transpoterAdapter.setTransporterListener(mTransporterLisenter);
         recyclerTransporter.setAdapter(transpoterAdapter);
+
         lockApiService.getTransporter().enqueue(new Callback<List<Transporter>>() {
             @Override
             public void onResponse(Call<List<Transporter>> call, Response<List<Transporter>> response) {
                 if (response.isSuccessful()) {
                     LockscreenViewService.this.transporters = response.body();
                     transpoterAdapter.setTransporters(transporters);
-
 
                 }
 
@@ -179,6 +197,7 @@ public class LockscreenViewService extends Service {
         Log.d("DEVICE_ID", device_id);
         lockApiService = LockAppUtils.getLockApiService();
         mIsLockEnable = LockscreenUtil.getInstance(mContext).isStandardKeyguardState();
+
         if (mIsLockEnable) {
             mParams = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
@@ -199,8 +218,10 @@ public class LockscreenViewService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (mIsLockEnable && mIsSoftkeyEnable) {
                 mParams.flags = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+
             } else {
                 mParams.flags = WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+
             }
         } else {
             mParams.flags = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
@@ -222,6 +243,13 @@ public class LockscreenViewService extends Service {
         }
     }
 
+
+    public void hideSoftKeyboard(View view, Context mContext) {
+        InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+
     private boolean isLockScreenAble() {
         boolean isLock = SharedPreferencesUtil.get(Lockscreen.ISLOCK);
         if (isLock) {
@@ -233,11 +261,70 @@ public class LockscreenViewService extends Service {
     }
 
 
+    public static void expand(final View v) {
+        v.measure(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        final int targetHeight = v.getMeasuredHeight();
+
+        // Older versions of android (pre API 21) cancel animations for views with a height of 0.
+        v.getLayoutParams().height = 1;
+        v.setVisibility(View.VISIBLE);
+        Animation a = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                v.getLayoutParams().height = interpolatedTime == 1
+                        ? WindowManager.LayoutParams.WRAP_CONTENT
+                        : (int) (targetHeight * interpolatedTime);
+                v.requestLayout();
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // 1dp/ms
+        a.setDuration((int) (targetHeight / v.getContext().getResources().getDisplayMetrics().density));
+        v.startAnimation(a);
+    }
+
+    public static void collapse(final View v) {
+        final int initialHeight = v.getMeasuredHeight();
+
+        Animation a = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                if (interpolatedTime == 1) {
+                    v.setVisibility(View.GONE);
+                } else {
+                    v.getLayoutParams().height = initialHeight - (int) (initialHeight * interpolatedTime);
+                    v.requestLayout();
+                }
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // 1dp/ms
+
+        a.setDuration((int) (initialHeight / v.getContext().getResources().getDisplayMetrics().density));
+        v.startAnimation(a);
+    }
+
     TranspoterAdapter.TransporterListener mTransporterLisenter = new TranspoterAdapter.TransporterListener() {
         @Override
         public void onClickTranspoter(Transporter transporter) {
             //Do stuff
             transId = transporter.getId();
+            collapse(recyclerTransporter);
+            titleRecyclerView.setVisibility(View.GONE);
+            edPassword.setVisibility(View.VISIBLE);
+            btnEdit.setVisibility(View.VISIBLE);
+            titlePass.setVisibility(View.VISIBLE);
+            btnsubmit.setVisibility(View.VISIBLE);
 
         }
     };
@@ -301,46 +388,6 @@ public class LockscreenViewService extends Service {
         }
     }
 
-    private void showDialog(String mess) {
-        mForgroundLayout.setX(mDevideDeviceWidth);
-        mForgroundLayout.setY(0);
-        dettachLockScreenView();
-        AlertDialog.Builder builder = new AlertDialog.Builder(mContext.getApplicationContext());
-        builder.setMessage(mess+"");
-        builder.setCancelable(false);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                //finish navigate to ninja lock
-                try {
-                    Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
-                    mContext.startActivity(intent);
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    //If current device don't have ninja lock
-                    openUrl(ninjalockLink);
-
-                }
-
-            }
-        });
-        AlertDialog alertDialog = builder.create();
-        alertDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-        alertDialog.show();
-        TextView messageView = (TextView)alertDialog.findViewById(android.R.id.message);
-        messageView.setGravity(Gravity.CENTER);
-
-        TextView titleView = (TextView)alertDialog.findViewById(mContext.getResources().getIdentifier("alertTitle", "id", "android"));
-        if (titleView != null) {
-            titleView.setGravity(Gravity.CENTER);
-        }
-
-        final Button positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        LinearLayout.LayoutParams positiveButtonLL = (LinearLayout.LayoutParams) positiveButton.getLayoutParams();
-        positiveButtonLL.gravity = Gravity.CENTER;
-        positiveButton.setLayoutParams(positiveButtonLL);
-    }
-
     private boolean dettachLockScreenView() {
         if (null != mWindowManager && null != mLockscreenView && isAttachedToWindow()) {
             mWindowManager.removeView(mLockscreenView);
@@ -366,17 +413,20 @@ public class LockscreenViewService extends Service {
     }
 
     private void settingLockView() {
+        titlePass = (TextView) mLockscreenView.findViewById(R.id.titlePass);
         recyclerTransporter = (RecyclerView) mLockscreenView.findViewById(R.id.listTransporter);
         layoutValidate = (LinearLayout) mLockscreenView.findViewById(R.id.layoutProgress);
         tvErrorMess = (TextView) mLockscreenView.findViewById(R.id.tvErrorText);
         edPassword = (EditText) mLockscreenView.findViewById(R.id.edPass);
-        layoutRoot = (RelativeLayout) mLockscreenView.findViewById(R.id.layoutRoot);
+        layoutRoot = (LinearLayout) mLockscreenView.findViewById(R.id.layoutRoot);
         imgClick = (ImageView) mLockscreenView.findViewById(R.id.imgClick);
         mBackgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_layout);
         mBackgroundInLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_background_in_layout);
         btnsubmit = (Button) mLockscreenView.findViewById(R.id.btnSubmit);
         mForgroundLayout = (RelativeLayout) mLockscreenView.findViewById(R.id.lockscreen_forground_layout);
         mShimmerTextView = (ShimmerTextView) mLockscreenView.findViewById(R.id.shimmer_tv);
+        titleRecyclerView = (TextView) mLockscreenView.findViewById(R.id.titleRecyclerView);
+        btnEdit = (Button) mLockscreenView.findViewById(R.id.btnEdit);
         (new Shimmer()).start(mShimmerTextView);
         mForgroundLayout.setOnTouchListener(mViewTouchListener);
 
@@ -388,6 +438,11 @@ public class LockscreenViewService extends Service {
         imgClick.setOnClickListener(mOnclick);
         layoutRoot.setOnClickListener(mOnclick);
         btnsubmit.setOnClickListener(mOnclick);
+        btnEdit.setOnClickListener(mOnclick);
+        edPassword.setVisibility(View.GONE);
+        titlePass.setVisibility(View.GONE);
+        mShortAnimationDuration = getResources().getInteger(
+                android.R.integer.config_shortAnimTime);
         //TODO change when in product
         loadListTransport();
         //kitkat
@@ -420,6 +475,7 @@ public class LockscreenViewService extends Service {
                             //device_id for product, 1 for testing
                             lockApiService.validateLockscreen(edPassword.getText().toString(), device_id, transId).enqueue(new Callback<Mansion>() {
                                 @Override
+
                                 public void onResponse(Call<Mansion> call, Response<Mansion> response) {
                                     hideProgress();
 
@@ -428,7 +484,18 @@ public class LockscreenViewService extends Service {
                                         Mansion responseMansion = response.body();
                                         boolean isCorrect = (responseMansion != null && responseMansion.getIs_correct());
                                         if (isCorrect) {
-                                            showDialog(responseMansion.getLock_key()); //showKey
+                                            mForgroundLayout.setX(mDevideDeviceWidth);
+                                            mForgroundLayout.setY(0);
+                                            dettachLockScreenView();
+                                            try {
+                                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
+                                                mContext.startActivity(intent);
+                                            } catch (Exception e) {
+                                                // TODO Auto-generated catch block
+                                                //If current device don't have ninja lock
+                                                openUrl(ninjalockLink);
+
+                                            }
 
                                         } else {
                                             showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
@@ -459,6 +526,17 @@ public class LockscreenViewService extends Service {
                     } else {
                         showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                     }
+                    break;
+                case R.id.btnEdit:
+                    //hideKeyboard
+                    hideSoftKeyboard(edPassword, mContext);
+                    expand(recyclerTransporter);
+                    titleRecyclerView.setVisibility(View.VISIBLE);
+                    edPassword.setVisibility(View.GONE);
+                    btnEdit.setVisibility(View.GONE);
+                    titlePass.setVisibility(View.GONE);
+                    btnsubmit.setVisibility(View.GONE);
+                    tvErrorMess.setVisibility(View.GONE);
                     break;
             }
 
@@ -528,7 +606,6 @@ public class LockscreenViewService extends Service {
     };
 
     private void optimizeForground(float forgroundX) {
-//        final int devideDeviceWidth = (mDeviceWidth / 2);
         if (forgroundX < mDevideDeviceWidth) {
             int startPostion = 0;
             for (startPostion = mDevideDeviceWidth; startPostion >= 0; startPostion--) {

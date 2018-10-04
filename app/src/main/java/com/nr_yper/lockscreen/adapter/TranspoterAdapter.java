@@ -51,15 +51,14 @@ public class TranspoterAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         final Transporter currentItem = transporters.get(i);
         TranspotViewHolder transpotViewHolder = (TranspotViewHolder) viewHolder;
         if (currentItem.isCheck()) {
-            transpotViewHolder.root.setBackgroundColor(Color.parseColor("#1abc9c"));
-            transpotViewHolder.imgCheck.setVisibility(View.VISIBLE);
+            transpotViewHolder.root.setBackgroundColor(Color.parseColor("#16a085"));
+
         } else {
             transpotViewHolder.root.setBackgroundColor(Color.parseColor("#00FFFFFF"));
-            transpotViewHolder.imgCheck.setVisibility(View.GONE);
-        }
 
-        transpotViewHolder.tvTrans.setText(currentItem.getName());
+        }
         Glide.with(context).load(currentItem.getLogoUrl()).into(transpotViewHolder.imgTrans);
+        transpotViewHolder.tvTrans.setText(currentItem.getName());
         transpotViewHolder.root.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -83,17 +82,14 @@ public class TranspoterAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     }
 
     class TranspotViewHolder extends RecyclerView.ViewHolder {
-        private RelativeLayout root;
-        private ImageView imgTrans;
+        private LinearLayout root;
         private TextView tvTrans;
-        private ImageView imgCheck;
-
+        private ImageView imgTrans;
         public TranspotViewHolder(@NonNull View itemView) {
             super(itemView);
-            root = (RelativeLayout) itemView.findViewById(R.id.layoutRootTranspoter);
-            imgTrans = (ImageView) itemView.findViewById(R.id.imgTrans);
+            root = (LinearLayout) itemView.findViewById(R.id.layoutRootTranspoter);
             tvTrans = (TextView) itemView.findViewById(R.id.tvTrans);
-            imgCheck = (ImageView) itemView.findViewById(R.id.imgCheck);
+            imgTrans = (ImageView) itemView.findViewById(R.id.imgTrans);
         }
     }
 
