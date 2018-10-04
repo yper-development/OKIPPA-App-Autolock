@@ -21,6 +21,8 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -48,6 +50,7 @@ import com.hungvv.lib.lockscreenusingservice.LockscreenUtil;
 import com.hungvv.lib.lockscreenusingservice.PermissionActivity;
 
 import com.hungvv.lib.lockscreenusingservice.SharedPreferencesUtil;
+import com.hungvv.lib.lockscreenusingservice.util.AutoAddTextWatcher;
 import com.nr_yper.lockscreen.R;
 import com.nr_yper.lockscreen.adapter.TranspoterAdapter;
 import com.nr_yper.lockscreen.data.api.LockApiService;
@@ -108,6 +111,7 @@ public class LockscreenViewService extends Service {
     private boolean isShowTransList = true;
     private int mShortAnimationDuration;
     private TextView titlePass;
+    private String current = "";
 
     private class SendMassgeHandler extends android.os.Handler {
         @Override
@@ -164,8 +168,6 @@ public class LockscreenViewService extends Service {
         com.nr_yper.lockscreen.adapter.DividerItemDecoration dividerItemDecoration1 = new com.nr_yper.lockscreen.adapter.DividerItemDecoration(mContext, R.drawable.divider_item);
         dividerItemDecoration1.setOrientation(com.nr_yper.lockscreen.adapter.DividerItemDecoration.VERTICAL);
         recyclerTransporter.setLayoutManager(layoutManager);
-        recyclerTransporter.addItemDecoration(dividerItemDecoration);
-        recyclerTransporter.addItemDecoration(dividerItemDecoration1);
         recyclerTransporter.setHasFixedSize(true);
         transpoterAdapter = new TranspoterAdapter(transporters, mContext);
         transpoterAdapter.setTransporterListener(mTransporterLisenter);
@@ -441,8 +443,9 @@ public class LockscreenViewService extends Service {
         btnEdit.setOnClickListener(mOnclick);
         edPassword.setVisibility(View.GONE);
         titlePass.setVisibility(View.GONE);
-        mShortAnimationDuration = getResources().getInteger(
-                android.R.integer.config_shortAnimTime);
+        edPassword.addTextChangedListener(new AutoAddTextWatcher(edPassword,
+                "-",
+                4, 8, 12));
         //TODO change when in product
         loadListTransport();
         //kitkat
@@ -471,9 +474,10 @@ public class LockscreenViewService extends Service {
                     if (!inputString.equals("")) {
                         showProgress();
                         hideErrorMess();
+                        String trackingNumber = edPassword.getText().toString().replace("-","");
                         if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
                             //device_id for product, 1 for testing
-                            lockApiService.validateLockscreen(edPassword.getText().toString(), device_id, transId).enqueue(new Callback<Mansion>() {
+                            lockApiService.validateLockscreen(trackingNumber, device_id, transId).enqueue(new Callback<Mansion>() {
                                 @Override
 
                                 public void onResponse(Call<Mansion> call, Response<Mansion> response) {

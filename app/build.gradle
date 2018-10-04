@@ -23,6 +23,11 @@ android {
         test.java.srcDirs += 'src/test/kotlin'
     }
 }
+android.applicationVariants.all { variant ->
+    variant.outputs.all {
+        outputFileName = "AppLock${variant.name}-${variant.versionName}.apk"
+    }
+}
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')

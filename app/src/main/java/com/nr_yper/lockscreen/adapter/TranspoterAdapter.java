@@ -3,6 +3,7 @@ package com.nr_yper.lockscreen.adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,10 +52,10 @@ public class TranspoterAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         final Transporter currentItem = transporters.get(i);
         TranspotViewHolder transpotViewHolder = (TranspotViewHolder) viewHolder;
         if (currentItem.isCheck()) {
-            transpotViewHolder.root.setBackgroundColor(Color.parseColor("#16a085"));
+            transpotViewHolder.root.setBackground(ContextCompat.getDrawable(context, R.drawable.selected_white_border));
 
         } else {
-            transpotViewHolder.root.setBackgroundColor(Color.parseColor("#00FFFFFF"));
+            transpotViewHolder.root.setBackground(ContextCompat.getDrawable(context, R.drawable.background_white_border));
 
         }
         Glide.with(context).load(currentItem.getLogoUrl()).into(transpotViewHolder.imgTrans);
