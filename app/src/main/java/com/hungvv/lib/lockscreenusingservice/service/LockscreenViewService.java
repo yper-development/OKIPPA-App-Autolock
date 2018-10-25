@@ -505,15 +505,15 @@ public class LockscreenViewService extends Service {
                                             mForgroundLayout.setX(mDevideDeviceWidth);
                                             mForgroundLayout.setY(0);
                                             dettachLockScreenView();
-//                                            try {
-//                                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
-//                                                mContext.startActivity(intent);
-//                                            } catch (Exception e) {
-//                                                // TODO Auto-generated catch block
-//                                                //If current device don't have ninja lock
-//                                                openUrl(ninjalockLink);
-//
-//                                            }
+                                            try {
+                                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
+                                                mContext.startActivity(intent);
+                                            } catch (Exception e) {
+                                                // TODO Auto-generated catch block
+                                                //If current device don't have ninja lock
+                                                openUrl(ninjalockLink);
+
+                                            }
 
                                         } else {
                                             //TODO Test 2 times auto shutdown
