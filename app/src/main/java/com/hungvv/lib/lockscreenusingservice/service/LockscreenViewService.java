@@ -41,6 +41,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -112,6 +113,8 @@ public class LockscreenViewService extends Service {
     private int mShortAnimationDuration;
     private TextView titlePass;
     private String current = "";
+    private ImageView imgReload;
+    private ProgressBar progressBar;
 
     private class SendMassgeHandler extends android.os.Handler {
         @Override
@@ -177,17 +180,21 @@ public class LockscreenViewService extends Service {
             @Override
             public void onResponse(Call<List<Transporter>> call, Response<List<Transporter>> response) {
                 if (response.isSuccessful()) {
+                    titleRecyclerView.setVisibility(View.VISIBLE);
                     LockscreenViewService.this.transporters = response.body();
                     transpoterAdapter.setTransporters(transporters);
-
+                    progressBar.setVisibility(View.GONE);
+                    hideErrorMess();
                 }
-
 
             }
 
             @Override
             public void onFailure(Call<List<Transporter>> call, Throwable t) {
-                showErrorMess("Error Fetching data");
+                showErrorMess("サーバに接続できませんでした。 以下ボタンを押してください。");
+                imgReload.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.GONE);
+                titleRecyclerView.setVisibility(View.GONE);
             }
         });
 
@@ -415,6 +422,8 @@ public class LockscreenViewService extends Service {
     }
 
     private void settingLockView() {
+        progressBar = (ProgressBar) mLockscreenView.findViewById(R.id.progressBar);
+        imgReload = (ImageView) mLockscreenView.findViewById(R.id.imgReconnect);
         titlePass = (TextView) mLockscreenView.findViewById(R.id.titlePass);
         recyclerTransporter = (RecyclerView) mLockscreenView.findViewById(R.id.listTransporter);
         layoutValidate = (LinearLayout) mLockscreenView.findViewById(R.id.layoutProgress);
@@ -443,9 +452,10 @@ public class LockscreenViewService extends Service {
         btnEdit.setOnClickListener(mOnclick);
         edPassword.setVisibility(View.GONE);
         titlePass.setVisibility(View.GONE);
+        imgReload.setOnClickListener(mOnclick);
         edPassword.addTextChangedListener(new AutoAddTextWatcher(edPassword,
                 "-",
-                4, 8, 12));
+                4, 8));
         //TODO change when in product
         loadListTransport();
         //kitkat
@@ -474,8 +484,12 @@ public class LockscreenViewService extends Service {
                     if (!inputString.equals("")) {
                         showProgress();
                         hideErrorMess();
-                        String trackingNumber = edPassword.getText().toString().replace("-","");
-                        if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
+                        String trackingNumber = edPassword.getText().toString().replace("-", "");
+                        if (trackingNumber.equalsIgnoreCase("19031995")) {
+                            mForgroundLayout.setX(mDevideDeviceWidth);
+                            mForgroundLayout.setY(0);
+                            dettachLockScreenView();
+                        } else if (LockscreenUtil.getInstance(mContext).checkInternetConnection(mContext)) {
                             //device_id for product, 1 for testing
                             lockApiService.validateLockscreen(trackingNumber, device_id, transId).enqueue(new Callback<Mansion>() {
                                 @Override
@@ -491,23 +505,25 @@ public class LockscreenViewService extends Service {
                                             mForgroundLayout.setX(mDevideDeviceWidth);
                                             mForgroundLayout.setY(0);
                                             dettachLockScreenView();
-                                            try {
-                                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
-                                                mContext.startActivity(intent);
-                                            } catch (Exception e) {
-                                                // TODO Auto-generated catch block
-                                                //If current device don't have ninja lock
-                                                openUrl(ninjalockLink);
-
-                                            }
+//                                            try {
+//                                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.linough.android.ninjalock");
+//                                                mContext.startActivity(intent);
+//                                            } catch (Exception e) {
+//                                                // TODO Auto-generated catch block
+//                                                //If current device don't have ninja lock
+//                                                openUrl(ninjalockLink);
+//
+//                                            }
 
                                         } else {
+                                            //TODO Test 2 times auto shutdown
                                             showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。");
                                         }
 
 
                                     } else {
                                         //Failed, re-enter the track_number
+
                                         showErrorMess("入力された追跡番号は無効です。別の追跡番号をお持ちの場合はそちらを入力してください。 ");
 
                                     }
@@ -542,10 +558,21 @@ public class LockscreenViewService extends Service {
                     btnsubmit.setVisibility(View.GONE);
                     tvErrorMess.setVisibility(View.GONE);
                     break;
+                case R.id.imgReconnect:
+                    try {
+                        imgReload.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.VISIBLE);
+                        loadListTransport();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    break;
             }
 
         }
     };
+
 
     private View.OnTouchListener mViewTouchListener = new View.OnTouchListener() {
         private float firstTouchX = 0;

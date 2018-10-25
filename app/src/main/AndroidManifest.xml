@@ -25,6 +25,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
        >
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="6e74063a2f5240280a07fd91521b04f9df0f8127"
+            />
         <activity
             android:windowSoftInputMode="adjustNothing"
             android:name=".MainActivity"

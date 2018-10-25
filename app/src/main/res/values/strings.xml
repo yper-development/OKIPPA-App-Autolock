@@ -2,4 +2,5 @@
     <string name="app_name">LockScreen</string>
     <string name="validate_tracking">Validating your tracking number...</string>
     <string name="edit">配送業者の選択に戻る</string>
+    <string name="input_tracking_number">追跡番号（トラッキングナンバー）を \n 入力してください。</string>
 </resources>

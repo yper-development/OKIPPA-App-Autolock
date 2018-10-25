@@ -21,12 +21,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mContext = this;
         SharedPreferencesUtil.init(mContext);
+
         switchCompat = (SwitchCompat) findViewById(R.id.switchCompat);
 
         boolean lockState = SharedPreferencesUtil.get(Lockscreen.ISLOCK);
         if (lockState) {
             switchCompat.setChecked(true);
-
         } else {
             switchCompat.setChecked(false);
 
